@@ -1,0 +1,52 @@
+const newman = require('newman');
+const fs = require('fs');
+let i = 1;
+collection1();
+
+
+function collection1(){
+    newman.run({
+        collection: 'C:/Users/user/Documents/other/collection.json',
+        environment: require("C:/Users/user/Documents/other/dev.environment.json"),
+        iterationData: 'C:/Users/user/Documents/other/names.csv',
+        delayRequest: 6000,    
+        reporters: 'cli'
+
+    }).on('start', function (err, args) { // on start of run, log to console
+        console.log('START...');
+    }).on('iteration', function (err, args) { 
+        console.log('AFTER ITERATION...');
+        console.log(JSON.stringify(this.summary.environment.toJSON(), null, 2));
+        fs.writeFileSync('env_'+i+'.json', JSON.stringify(this.summary.environment.toJSON(), null, 2));
+        collection2();
+
+    }).on('done', function (err, summary) {
+        if (err || summary.error) {
+            console.error('collection run encountered an error.');
+        }
+        else {
+            console.log('collection run completed.');
+        }
+    });
+}
+
+function collection2(){
+    newman.run(
+    {
+        collection: 'C:/Users/user/Documents/other/collection2.json',
+        environment: require("C:/Users/user/Documents/other/env_"+ i +".json"),
+        iterationCount: 1,
+        reporters: 'cli'
+
+    },
+    function(err, summary){
+        console.log('second run finished');
+        i++;
+        if (err) {
+            console.log(err)
+            return            
+        }
+    });
+}
+
+
